@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12333D">
+<title>Tournée</title>
+<style>
+:root{
+  --encre:#12333D;
+  --soin:#1B4D5C;
+  --eau:#5A93A3;
+  --corail:#E07B50;
+  --valide:#287A4A;
+  --ambre:#B8790A;
+  --alerte:#B83030;
+  --papier:#EEF1F2;
+  --carte:#FFFFFF;
+  --trait:#DDE3E5;
+  --gris:#7A8A8F;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:var(--sans);background:var(--papier);color:var(--encre);
+  -webkit-font-smoothing:antialiased;padding-bottom:88px;
+}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+
+/* ---------- en-tête ---------- */
+header{
+  position:sticky;top:0;z-index:20;background:var(--encre);color:#fff;
+  padding:14px 18px 12px;padding-top:calc(14px + env(safe-area-inset-top));
+}
+.jour{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8FB3BD}
+.titre{font-size:23px;font-weight:800;letter-spacing:-.02em;margin-top:2px}
+.compteurs{display:flex;gap:20px;margin-top:12px}
+.compteur b{display:block;font-size:19px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.compteur span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8FB3BD}
+
+/* ---------- rail horaire ---------- */
+main{padding:18px 14px 0}
+.creneau{display:grid;grid-template-columns:52px 1fr;gap:10px;margin-bottom:14px}
+.heure{
+  font-family:var(--mono);font-size:15px;font-weight:600;color:var(--soin);
+  padding-top:14px;text-align:right;font-variant-numeric:tabular-nums;
+  position:relative;
+}
+.heure::after{
+  content:"";position:absolute;right:-6px;top:20px;width:7px;height:7px;
+  border-radius:50%;background:var(--soin);
+}
+.creneau.fait .heure,.creneau.fait .heure::after{color:var(--gris);background:var(--gris)}
+
+/* ---------- carte patient ---------- */
+.carte{
+  background:var(--carte);border-radius:14px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(18,51,61,.10);
+}
+.carte.fait{opacity:.5}
+.haut{display:flex;align-items:flex-start;gap:10px;padding:13px 14px 10px;width:100%;text-align:left}
+.nom{font-size:16px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
+.actes{font-size:12.5px;color:var(--gris);margin-top:3px;line-height:1.45}
+.duree{
+  font-family:var(--mono);font-size:12px;font-weight:600;color:var(--soin);
+  background:#E6EDEF;padding:4px 7px;border-radius:7px;flex-shrink:0;white-space:nowrap
+}
+
+/* signature : la bande d'accès */
+.acces{
+  display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+  background:var(--encre);color:#fff;padding:9px 14px;
+}
+.acces .cle{
+  font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.08em;
+  background:rgba(255,255,255,.14);padding:3px 9px;border-radius:6px
+}
+.acces .ou{font-size:12px;color:#A9C6CE;line-height:1.35}
+.acces.vide{background:#4A6169}
+
+.pied{display:flex;border-top:1px solid var(--trait)}
+.pied button{flex:1;padding:12px 4px;font-size:13px;font-weight:700;color:var(--soin)}
+.pied button+button{border-left:1px solid var(--trait)}
+.pied .absent{color:var(--ambre)}
+.pied .annuler{color:var(--gris)}
+
+/* ---------- alerte ---------- */
+.epingle{
+  display:flex;gap:8px;background:#FFF6E2;border-left:3px solid var(--ambre);
+  padding:9px 14px;font-size:12.5px;color:#5C4200;line-height:1.5
+}
+
+/* ---------- fiche ---------- */
+.retour{
+  display:inline-flex;align-items:center;gap:6px;color:#8FB3BD;
+  font-size:13px;font-weight:600;margin-bottom:8px
+}
+.bloc{background:var(--carte);border-radius:14px;padding:15px;margin-bottom:12px;
+  box-shadow:0 1px 3px rgba(18,51,61,.08)}
+.etiquette{font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--gris);
+  font-weight:700;margin-bottom:8px}
+.ligne{display:flex;justify-content:space-between;gap:12px;padding:7px 0;
+  border-bottom:1px solid var(--trait);font-size:14px}
+.ligne:last-child{border-bottom:none}
+.ligne span:first-child{color:var(--gris);font-size:13px;flex-shrink:0}
+.ligne span:last-child{text-align:right;font-weight:600}
+.code{font-family:var(--mono);font-weight:700;letter-spacing:.06em}
+
+.soin{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--trait)}
+.soin:last-child{border-bottom:none}
+.soin-t{flex:1;min-width:0}
+.soin-n{font-size:14px;font-weight:600}
+.soin-e{font-size:11.5px;margin-top:2px;font-weight:600}
+.ok{
+  width:34px;height:34px;border-radius:10px;border:1.5px solid var(--trait);
+  color:var(--valide);font-size:15px;flex-shrink:0;display:flex;
+  align-items:center;justify-content:center
+}
+.ok:active{background:var(--valide);color:#fff;border-color:var(--valide)}
+
+.note{background:#FFF6E2;border-radius:10px;padding:10px 12px;font-size:13px;
+  line-height:1.55;color:#5C4200;margin-bottom:7px;display:flex;gap:10px}
+.note button{color:#B08A2E;font-size:15px;flex-shrink:0}
+.champ{width:100%;padding:10px 12px;border:1px solid var(--trait);border-radius:10px;
+  background:var(--papier);font-size:14px;margin-bottom:8px}
+.plein{width:100%;padding:12px;border-radius:11px;background:var(--soin);color:#fff;
+  font-size:14px;font-weight:700}
+.vide{width:100%;padding:12px;border-radius:11px;border:1.5px solid var(--soin);
+  color:var(--soin);font-size:14px;font-weight:700;background:none}
+
+/* ---------- liste patients ---------- */
+.rangee{display:flex;align-items:center;gap:12px;background:var(--carte);
+  padding:13px 14px;border-radius:12px;margin-bottom:8px;width:100%;text-align:left;
+  box-shadow:0 1px 3px rgba(18,51,61,.07)}
+.pastille{width:38px;height:38px;border-radius:50%;background:var(--soin);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0}
+
+/* ---------- navigation ---------- */
+nav{
+  position:fixed;bottom:0;left:0;right:0;z-index:30;display:flex;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(14px);
+  border-top:1px solid var(--trait);padding-bottom:env(safe-area-inset-bottom)
+}
+nav button{flex:1;padding:11px 4px 13px;font-size:10.5px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--gris)}
+nav button i{display:block;font-style:normal;font-size:19px;margin-bottom:2px;opacity:.55}
+nav button.on{color:var(--soin)}
+nav button.on i{opacity:1}
+
+.vide-etat{text-align:center;padding:50px 24px;color:var(--gris)}
+.vide-etat p{font-size:14px;line-height:1.6;margin-top:8px}
+.bandeau{background:var(--ambre);color:#fff;font-size:11.5px;padding:7px 16px;text-align:center}
+/* ---------- note intelligente ---------- */
+.voile{position:fixed;inset:0;z-index:40;background:rgba(18,51,61,.55);display:flex;align-items:flex-end}
+.feuille{background:var(--papier);width:100%;max-height:92vh;overflow-y:auto;
+  border-radius:20px 20px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom))}
+.poignee{width:38px;height:4px;border-radius:2px;background:var(--trait);margin:0 auto 14px}
+.feuille h2{font-size:18px;font-weight:800;letter-spacing:-.01em;margin-bottom:4px}
+.feuille .sous{font-size:13px;color:var(--gris);line-height:1.5;margin-bottom:14px}
+textarea.champ{min-height:110px;resize:vertical;line-height:1.5}
+.propo{background:var(--carte);border-radius:12px;padding:12px 13px;margin-bottom:8px;
+  display:flex;gap:11px;align-items:flex-start;box-shadow:0 1px 3px rgba(18,51,61,.08)}
+.propo input{width:21px;height:21px;accent-color:var(--soin);flex-shrink:0;margin-top:1px}
+.propo b{font-size:14px;font-weight:700;display:block}
+.propo em{font-size:11.5px;color:var(--gris);font-style:normal;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.envoye{font-family:var(--mono);font-size:11px;color:var(--gris);background:#E3E8EA;
+  border-radius:9px;padding:10px 11px;line-height:1.6;margin-bottom:12px;word-break:break-word}
+.erreur{background:#FDE9E9;color:var(--alerte);border-radius:10px;padding:11px 12px;
+  font-size:13px;line-height:1.5;margin-bottom:10px}
+.duo{display:flex;gap:8px;margin-top:4px}
+.duo>*{flex:1}
+/* ---------- dictée ---------- */
+.micro{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  padding:12px;border-radius:11px;border:1.5px solid var(--soin);color:var(--soin);
+  font-size:14px;font-weight:700;background:none;margin-bottom:8px}
+.micro.on{background:var(--alerte);border-color:var(--alerte);color:#fff;animation:pouls 1.3s infinite}
+@keyframes pouls{50%{opacity:.62}}
+.mode-dictee{font-size:11px;color:var(--gris);text-align:center;margin:-4px 0 10px;line-height:1.5}
+
+/* ---------- avertissement ---------- */
+.avert{background:#FFF6E2;border-left:3px solid var(--ambre);border-radius:0 10px 10px 0;
+  padding:10px 12px;font-size:12px;color:#5C4200;line-height:1.55;margin-bottom:12px}
+
+/* ---------- formulaire ---------- */
+.etiq-champ{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gris);
+  font-weight:700;display:block;margin:12px 0 5px}
+.duo-champ{display:flex;gap:8px}
+.duo-champ>*{flex:1;min-width:0}
+.puce{padding:8px 12px;border-radius:9px;border:1.5px solid var(--trait);background:var(--carte);
+  font-size:13px;font-weight:600;color:var(--gris)}
+.puce.on{background:var(--soin);border-color:var(--soin);color:#fff}
+.puces{display:flex;flex-wrap:wrap;gap:6px}
+
+/* ---------- documents ---------- */
+.grille-docs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.doc{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--papier);
+  border:1px solid var(--trait);display:flex;align-items:center;justify-content:center}
+.doc img{width:100%;height:100%;object-fit:cover}
+.doc .nom-doc{font-size:10px;color:var(--gris);padding:6px;text-align:center;word-break:break-word;line-height:1.3}
+.doc .sup{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;
+  background:rgba(18,51,61,.78);color:#fff;font-size:13px;line-height:22px;text-align:center}
+.miniature{position:relative;display:inline-block;margin-bottom:10px}
+.miniature img{max-height:120px;border-radius:10px;display:block}
+.miniature button{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:50%;
+  background:rgba(18,51,61,.8);color:#fff;font-size:14px}
+input[type=file]{display:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div id="bandeau"></div>
+<header>
+  <div class="jour" id="jour"></div>
+  <div class="titre" id="titre">Tournée</div>
+  <div class="compteurs" id="compteurs"></div>
+</header>
+
+<main id="ecran"></main>
+
+<nav>
+  <button id="nav-tournee" class="on" onclick="aller('tournee')"><i>◷</i>Tournée</button>
+  <button id="nav-note" onclick="ouvrirNote()"><i>✎</i>Note</button>
+  <button id="nav-patients" onclick="aller('patients')"><i>☰</i>Patients</button>
+  <button id="nav-reglages" onclick="aller('reglages')"><i>⚙</i>Réglages</button>
+</nav>
+
+<script>
+/* =========================================================
+   1. STOCKAGE — une seule couche : IndexedDB
+   Si IndexedDB est indisponible (navigation privée, aperçu),
+   on bascule en mémoire et on le dit clairement à l'écran.
+   ========================================================= */
+const DB = (() => {
+  const NOM = 'tournee', VERSION = 1;
+  const TABLES = ['patients', 'documents', 'transmissions', 'reglages'];
+  let base = null, memoire = null;
+
+  function ouvrir() {
+    return new Promise((ok, ko) => {
+      if (!self.indexedDB) return ko(new Error('indisponible'));
+      const r = indexedDB.open(NOM, VERSION);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        TABLES.forEach(t => {
+          if (!d.objectStoreNames.contains(t)) {
+            const s = d.createObjectStore(t, { keyPath: 'id' });
+            if (t === 'documents' || t === 'transmissions') s.createIndex('patientId', 'patientId');
+          }
+        });
+      };
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => ko(r.error);
+    });
+  }
+
+  async function init() {
+    try { base = await ouvrir(); }
+    catch (e) { memoire = {}; TABLES.forEach(t => memoire[t] = new Map()); }
+    return !memoire;
+  }
+
+  function tx(table, mode) {
+    return base.transaction(table, mode).objectStore(table);
+  }
+  function promesse(req) {
+    return new Promise((ok, ko) => { req.onsuccess = () => ok(req.result); req.onerror = () => ko(req.error); });
+  }
+
+  return {
+    init,
+    enMemoire: () => !!memoire,
+    async tout(table) {
+      if (memoire) return [...memoire[table].values()];
+      return promesse(tx(table, 'readonly').getAll());
+    },
+    async ecrire(table, objet) {
+      if (memoire) { memoire[table].set(objet.id, objet); return objet; }
+      await promesse(tx(table, 'readwrite').put(objet));
+      return objet;
+    },
+    async supprimer(table, id) {
+      if (memoire) { memoire[table].delete(id); return; }
+      await promesse(tx(table, 'readwrite').delete(id));
+    }
+  };
+})();
+
+/* =========================================================
+   2. CATALOGUE DES SOINS — figé dans le code, jamais en base
+   ========================================================= */
+const CATALOGUE = {
+  t_comp:   { nom: 'Toilette complète',   duree: 35 },
+  toilette: { nom: 'Aide à la toilette',  duree: 20 },
+  meds:     { nom: 'Médicaments',         duree: 5  },
+  pilul:    { nom: 'Pilulier',            duree: 10 },
+  glyc:     { nom: 'Glycémie',            duree: 5  },
+  inj_sc:   { nom: 'Injection SC',        duree: 10 },
+  hbpm:     { nom: 'Anticoagulant',       duree: 10 },
+  pst_s:    { nom: 'Pansement simple',    duree: 15 },
+  pst_c:    { nom: 'Pansement complexe',  duree: 25 },
+  plaie_ch: { nom: 'Plaie chronique',     duree: 25 },
+  sondage:  { nom: 'Sondage urinaire',    duree: 20 },
+  contention:{ nom: 'Contention veineuse',duree: 10 },
+  ta:       { nom: 'Tension',             duree: 10 },
+  pds:      { nom: 'Prise de sang',       duree: 15 }
+};
+
+/* =========================================================
+   3. CALCULS — rien de ce qui suit n'est stocké
+   ========================================================= */
+const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+const aujourdhui = () => {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+};
+const jourSemaine = () => (new Date().getDay() + 6) % 7;   // 0 = lundi
+
+function decalerDate(iso, jours) {
+  const [a,m,j] = iso.split('-').map(Number);
+  const d = new Date(a, m-1, j);
+  d.setDate(d.getDate() + jours);
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function joursRestants(iso) {
+  const auj = new Date(); auj.setHours(0,0,0,0);
+  const [a,m,j] = iso.split('-').map(Number);
+  return Math.round((new Date(a, m-1, j) - auj) / 86400000);
+}
+
+// prochaine échéance d'un soin — calculée, jamais stockée
+function echeance(soin) {
+  if (!soin.frequence) return null;
+  return decalerDate(soin.dernierFait, soin.frequence);
+}
+function etatSoin(soin) {
+  const e = echeance(soin);
+  if (!e) return { texte: 'Ponctuel', couleur: 'var(--gris)', du: true };
+  const r = joursRestants(e);
+  if (r < 0)  return { texte: 'En retard de ' + Math.abs(r) + ' j', couleur: 'var(--alerte)', du: true };
+  if (r === 0) return { texte: "À faire aujourd'hui",             couleur: 'var(--valide)', du: true };
+  if (r === 1) return { texte: 'Demain',                          couleur: 'var(--gris)',   du: false };
+  return { texte: 'Dans ' + r + ' j', couleur: 'var(--gris)', du: false };
+}
+// durée d'un passage = somme des soins réellement dus aujourd'hui
+function dureePassage(p) {
+  return (p.soins || []).filter(s => etatSoin(s).du).reduce((t, s) => t + (s.duree || 10), 0);
+}
+const premierPassage = p => (p.passages && p.passages[0]) ? p.passages[0].debut : '';
+
+function tourneeDuJour(patients) {
+  const j = jourSemaine();
+  return patients
+    .filter(p => !p.archive && (p.jours || []).includes(j))
+    .sort((a, b) => (premierPassage(a) || '99:99').localeCompare(premierPassage(b) || '99:99'));
+}
+const initiales = n => n.replace(/^(Mme|M\.|Mr)\s+/, '').split(' ').slice(0,2).map(m => m[0]).join('').toUpperCase();
+
+/* =========================================================
+   4. ÉTAT
+   ========================================================= */
+let patients = [];
+let vue = 'tournee';
+let ficheOuverte = null;
+
+async function charger() {
+  patients = await DB.tout('patients');
+  if (!patients.length) { patients = EXEMPLES; for (const p of patients) await DB.ecrire('patients', p); }
+}
+async function majPatient(id, champs) {
+  const p = patients.find(x => x.id === id);
+  Object.assign(p, champs);
+  await DB.ecrire('patients', p);
+  dessiner();
+}
+
+/* =========================================================
+   5. ÉCRANS
+   ========================================================= */
+const e = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function dessiner() {
+  const d = new Date();
+  document.getElementById('jour').textContent =
+    JOURS[jourSemaine()] + ' ' + d.getDate() + ' ' + d.toLocaleDateString('fr-FR', { month: 'long' });
+  const alertes = [];
+  if (window.self !== window.top)
+    alertes.push('Aperçu intégré : micro, appareil photo et fichiers sont bloqués ici.');
+  if (DB.enMemoire()) alertes.push('Les modifications ne seront pas conservées.');
+  if (!window.isSecureContext) alertes.push('Page non sécurisée : le micro exige une adresse en https.');
+  document.getElementById('bandeau').innerHTML =
+    alertes.length ? `<div class="bandeau">${alertes.join(' ')}</div>` : '';
+
+  if (vue === 'fiche') return ecranFiche();
+  if (vue === 'reglages') return ecranReglages();
+  if (vue === 'nouveau') return ecranNouveau();
+  if (vue === 'patients') return ecranPatients();
+  ecranTournee();
+}
+
+/* ----- Tournée du jour ----- */
+function ecranTournee() {
+  const liste = tourneeDuJour(patients);
+  const restants = liste.filter(p => p.statut === 'aVisiter');
+  const minutes = restants.reduce((t, p) => t + dureePassage(p), 0);
+
+  document.getElementById('titre').textContent = 'Tournée du jour';
+  document.getElementById('compteurs').innerHTML = `
+    <div class="compteur"><b>${restants.length}</b><span>à visiter</span></div>
+    <div class="compteur"><b>${liste.length - restants.length}</b><span>faits</span></div>
+    <div class="compteur"><b>${Math.floor(minutes/60)}h${String(minutes%60).padStart(2,'0')}</b><span>restant</span></div>`;
+
+  if (!liste.length) {
+    document.getElementById('ecran').innerHTML =
+      `<div class="vide-etat"><div style="font-size:34px">◷</div>
+       <p>Aucun passage prévu ${JOURS[jourSemaine()].toLowerCase()}.<br>
+       Ouvre un patient pour ajouter ce jour à ses jours de passage.</p></div>`;
+    return;
+  }
+
+  document.getElementById('ecran').innerHTML = liste.map(p => {
+    const fait = p.statut !== 'aVisiter';
+    const dus = (p.soins || []).filter(s => etatSoin(s).du);
+    const cles = p.acces?.cles;
+    const codes = [p.acces?.codePortail, p.acces?.codeBatiment].filter(Boolean);
+    const notes = (p.notes || []).filter(n => !n.archivee);
+
+    let acces;
+    if (codes.length || cles?.possede) {
+      acces = `<div class="acces">
+        ${codes.map(c => `<span class="cle">${e(c)}</span>`).join('')}
+        ${cles?.possede ? `<span class="ou">🗝 ${e(cles.ou || 'Clés détenues')}</span>` : ''}
+        ${p.adresse?.etage ? `<span class="ou">${e(p.adresse.etage)} ${e(p.adresse.porte || '')}</span>` : ''}
+      </div>`;
+    } else {
+      acces = `<div class="acces vide"><span class="ou">Sonner · ${e(p.adresse?.etage || 'accès non renseigné')} ${e(p.adresse?.porte || '')}</span></div>`;
+    }
+
+    return `<div class="creneau ${fait ? 'fait' : ''}">
+      <div class="heure">${e(premierPassage(p) || '—')}</div>
+      <div class="carte ${fait ? 'fait' : ''}">
+        <button class="haut" onclick="ouvrirFiche(${p.id})">
+          <div style="flex:1;min-width:0">
+            <div class="nom">${e(p.nom)}</div>
+            <div class="actes">${dus.length ? dus.map(s => e(s.libelle)).join(' · ') : 'Rien de prévu aujourd’hui'}</div>
+          </div>
+          <div class="duree">${dureePassage(p)} min</div>
+        </button>
+        ${acces}
+        ${notes.length ? `<div class="epingle"><span>📌</span><span>${e(notes[0].texte)}</span></div>` : ''}
+        <div class="pied">
+          ${fait
+            ? `<button class="annuler" onclick="marquer(${p.id},'aVisiter')">Remettre à visiter</button>`
+            : `<button onclick="marquer(${p.id},'visite')">Visite faite</button>
+               <button class="absent" onclick="marquer(${p.id},'absent')">Absent</button>`}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ----- Liste des patients ----- */
+function ecranPatients() {
+  document.getElementById('titre').textContent = 'Patients';
+  const actifs = patients.filter(p => !p.archive);
+  document.getElementById('compteurs').innerHTML =
+    `<div class="compteur"><b>${actifs.length}</b><span>suivis</span></div>`;
+  document.getElementById('ecran').innerHTML =
+    `<button class="plein" style="margin-bottom:14px" onclick="aller('nouveau')">+ Nouveau patient</button>` +
+    actifs
+    .sort((a, b) => a.nom.localeCompare(b.nom))
+    .map(p => `<button class="rangee" onclick="ouvrirFiche(${p.id})">
+        <div class="pastille">${e(initiales(p.nom))}</div>
+        <div style="flex:1;min-width:0">
+          <div class="nom">${e(p.nom)}</div>
+          <div class="actes">${(p.jours || []).map(j => JOURS[j].slice(0,3)).join(' ') || 'Aucun jour défini'}</div>
+        </div>
+        <div style="color:var(--gris)">›</div>
+      </button>`).join('');
+}
+
+/* ----- Fiche patient ----- */
+function ecranFiche() {
+  const p = patients.find(x => x.id === ficheOuverte);
+  if (!p) { vue = 'tournee'; return dessiner(); }
+
+  document.getElementById('titre').textContent = p.nom;
+  const age = p.naissance ? Math.floor((Date.now() - new Date(p.naissance)) / 31557600000) : null;
+  document.getElementById('compteurs').innerHTML =
+    `<div class="compteur"><b>${age ?? '—'}</b><span>ans</span></div>
+     <div class="compteur"><b>${(p.passages || []).length}</b><span>passages/jour</span></div>`;
+
+  const notes = (p.notes || []).filter(n => !n.archivee);
+
+  document.getElementById('ecran').innerHTML = `
+    <button class="retour" onclick="aller('${ficheRetour}')">‹ Retour</button>
+
+    <div class="bloc">
+      <div class="etiquette">Accès</div>
+      <div class="ligne"><span>Adresse</span><span>${e(p.adresse?.rue || '—')}</span></div>
+      <div class="ligne"><span>Ville</span><span>${e(p.adresse?.ville || '—')}</span></div>
+      <div class="ligne"><span>Étage</span><span>${e(p.adresse?.etage || '—')} ${e(p.adresse?.porte || '')}</span></div>
+      ${p.acces?.codePortail ? `<div class="ligne"><span>Code portail</span><span class="code">${e(p.acces.codePortail)}</span></div>` : ''}
+      ${p.acces?.codeBatiment ? `<div class="ligne"><span>Code bâtiment</span><span class="code">${e(p.acces.codeBatiment)}</span></div>` : ''}
+      ${p.acces?.interphone ? `<div class="ligne"><span>Interphone</span><span>${e(p.acces.interphone)}</span></div>` : ''}
+      ${p.acces?.cles?.possede ? `<div class="ligne"><span>Clés</span><span>${e(p.acces.cles.ou)}</span></div>` : ''}
+      ${p.telephone ? `<div class="ligne"><span>Téléphone</span><span><a href="tel:${e(p.telephone.replace(/\s/g,''))}" style="color:var(--soin)">${e(p.telephone)}</a></span></div>` : ''}
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Passages</div>
+      ${(p.passages || []).map((x, i) => `<div class="ligne"><span>Passage ${i+1}</span>
+        <span class="code">${e(x.debut)}${x.fin ? ' – ' + e(x.fin) : ''}</span></div>`).join('') || '<div class="actes">Aucun passage défini</div>'}
+      <div class="ligne"><span>Jours</span><span>${(p.jours || []).map(j => JOURS[j].slice(0,3)).join(' ') || '—'}</span></div>
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Soins</div>
+      ${(p.soins || []).map(s => {
+        const et = etatSoin(s);
+        return `<div class="soin">
+          <div class="soin-t">
+            <div class="soin-n">${e(s.libelle)}</div>
+            <div class="soin-e" style="color:${et.couleur}">${et.texte} · ${s.duree} min</div>
+          </div>
+          <button class="ok" onclick="soinFait(${p.id},'${s.id}')" aria-label="Marquer fait">✓</button>
+        </div>`;
+      }).join('') || '<div class="actes">Aucun soin enregistré</div>'}
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Notes</div>
+      ${notes.map(n => `<div class="note"><span style="flex:1">${e(n.texte)}</span>
+        <button onclick="archiverNote(${p.id},${n.id})" aria-label="Archiver">📁</button></div>`).join('')}
+      <input class="champ" id="note-txt" placeholder="Ajouter une note…" onkeydown="if(event.key==='Enter')ajouterNote(${p.id})">
+      <button class="vide" onclick="ajouterNote(${p.id})">Ajouter la note</button>
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Documents</div>
+      ${docsCourants.length ? `<div class="grille-docs">${docsCourants.map(d => `
+        <div class="doc">
+          ${d.url && d.mimeType.startsWith('image/')
+            ? `<img src="${d.url}" alt="${e(d.nom)}" onclick="window.open('${d.url}')">`
+            : `<span class="nom-doc" onclick="window.open('${d.url}')">${e(d.nom)}</span>`}
+          <button class="sup" onclick="supprimerDocument(${d.id})" aria-label="Supprimer">×</button>
+        </div>`).join('')}</div>` : '<div class="actes" style="margin-bottom:10px">Aucun document</div>'}
+      <input type="file" id="fichier-doc" accept="image/*,application/pdf" onchange="ajouterDocument(${p.id}, this.files[0])">
+      <button class="vide" onclick="document.getElementById('fichier-doc').click()">+ Ajouter un document</button>
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Pathologies</div>
+      <div style="font-size:14px;line-height:1.6">${e(p.pathologies || '—')}</div>
+    </div>`;
+}
+
+/* =========================================================
+   6. ACTIONS
+   ========================================================= */
+let ficheRetour = 'tournee';
+
+function aller(v) {
+  vue = v;
+  const onglets = { tournee: 'nav-tournee', patients: 'nav-patients', reglages: 'nav-reglages' };
+  Object.entries(onglets).forEach(([k, id]) => document.getElementById(id).classList.toggle('on', v === k));
+  window.scrollTo(0, 0);
+  dessiner();
+}
+async function ouvrirFiche(id) {
+  ficheRetour = (vue === 'nouveau') ? 'patients' : vue;
+  ficheOuverte = id; vue = 'fiche';
+  await chargerDocuments(id);
+  window.scrollTo(0, 0); dessiner();
+}
+function marquer(id, statut) { majPatient(id, { statut }); }
+
+function soinFait(pid, sid) {
+  const p = patients.find(x => x.id === pid);
+  majPatient(pid, { soins: p.soins.map(s => s.id === sid ? { ...s, dernierFait: aujourdhui() } : s) });
+}
+function ajouterNote(pid) {
+  const champ = document.getElementById('note-txt');
+  const texte = champ.value.trim();
+  if (!texte) return;
+  const p = patients.find(x => x.id === pid);
+  majPatient(pid, { notes: [...(p.notes || []), { id: Date.now(), texte, date: aujourdhui(), archivee: false }] });
+}
+function archiverNote(pid, nid) {
+  const p = patients.find(x => x.id === pid);
+  majPatient(pid, { notes: p.notes.map(n => n.id === nid ? { ...n, archivee: true } : n) });
+}
+
+/* =========================================================
+   7. DONNÉES D'EXEMPLE — patients fictifs
+   ========================================================= */
+function soin(type, libelle, frequence, ilYA) {
+  return {
+    id: 's' + Math.random().toString(36).slice(2, 8),
+    type, libelle: libelle || CATALOGUE[type].nom,
+    frequence: frequence ?? null,
+    dernierFait: decalerDate(aujourdhui(), -(ilYA ?? 0)),
+    duree: CATALOGUE[type].duree
+  };
+}
+const EXEMPLES = [
+  { id: 1, nom: 'Mme Aubry Renée', naissance: '1938-04-12', telephone: '06 12 34 56 78', type: 'chronique',
+    adresse: { rue: '14 rue des Lilas', ville: '95210 Saint-Gratien', etage: '3e', porte: 'Gauche', typeLogement: 'appartement' },
+    acces: { codePortail: '1960', codeBatiment: '', interphone: '', cles: { possede: true, ou: 'Badge rouge dans la boîte aux lettres', photoId: null } },
+    pathologies: 'Diabète de type 2, hypertension',
+    jours: [0,1,2,3,4,5,6], passages: [{ debut: '07:30', fin: '' }, { debut: '19:00', fin: '' }],
+    soins: [soin('t_comp', null, 1, 1), soin('glyc', null, 1, 1), soin('inj_sc', 'Insuline lente', 1, 1)],
+    notes: [{ id: 1, texte: 'Commencer par les bas de contention avant la toilette.', date: aujourdhui(), archivee: false }],
+    statut: 'aVisiter', statutNote: '', archive: false, ordre: 0 },
+
+  { id: 2, nom: 'M. Ferrand Louis', naissance: '1945-09-03', telephone: '06 98 76 54 32', type: 'chronique',
+    adresse: { rue: '5 allée des Peupliers', ville: '95210 Saint-Gratien', etage: '1er', porte: 'Droite', typeLogement: 'appartement' },
+    acces: { codePortail: 'B1808', codeBatiment: '111', interphone: '', cles: { possede: false, ou: '', photoId: null } },
+    pathologies: 'Plaie chronique du pied droit',
+    jours: [0,1,2,3,4], passages: [{ debut: '08:15', fin: '08:45' }],
+    soins: [soin('pst_c', 'Pansement mèche pied droit', 2, 2), soin('meds', null, 1, 1)],
+    notes: [{ id: 2, texte: 'Applique la xylocaïne 15 min avant le pansement.', date: aujourdhui(), archivee: false }],
+    statut: 'aVisiter', statutNote: '', archive: false, ordre: 1 },
+
+  { id: 3, nom: 'Mme Delaunay Paulette', naissance: '1933-01-27', telephone: '01 39 00 11 22', type: 'chronique',
+    adresse: { rue: '2 place du Marché', ville: '95100 Argenteuil', etage: '4e', porte: 'Fond couloir', typeLogement: 'appartement' },
+    acces: { codePortail: '', codeBatiment: '', interphone: 'MARCHAND', cles: { possede: true, ou: 'Trousseau vert, boîte à clés cuisine', photoId: null } },
+    pathologies: 'Sonde urinaire à demeure',
+    jours: [0,1,2,3,4,5,6], passages: [{ debut: '09:00', fin: '' }],
+    soins: [soin('sondage', null, 7, 7), soin('ta', null, 1, 1), soin('toilette', null, 1, 1)],
+    notes: [], statut: 'aVisiter', statutNote: '', archive: false, ordre: 2 },
+
+  { id: 4, nom: 'M. Vasseur Émile', naissance: '1951-11-19', telephone: '', type: 'temporaire',
+    adresse: { rue: '30 rue de la Gare', ville: '95210 Saint-Gratien', etage: 'RDC', porte: '', typeLogement: 'maison' },
+    acces: { codePortail: '', codeBatiment: '', interphone: '', cles: { possede: false, ou: '', photoId: null } },
+    pathologies: 'Post-opératoire — prothèse de hanche',
+    jours: [0,2,4], passages: [{ debut: '11:00', fin: '12:00' }],
+    soins: [soin('hbpm', 'Anticoagulant 0,4', 1, 1), soin('pst_s', 'Pansement cicatrice', 3, 3)],
+    notes: [], statut: 'aVisiter', statutNote: '', archive: false, ordre: 3 },
+
+  { id: 5, nom: 'Mme Nourrit Yvette', naissance: '1942-06-30', telephone: '06 44 55 66 77', type: 'chronique',
+    adresse: { rue: '8 rue Berthelot', ville: '95210 Saint-Gratien', etage: '2e', porte: 'Gauche', typeLogement: 'appartement' },
+    acces: { codePortail: '2389', codeBatiment: '', interphone: '', cles: { possede: false, ou: '', photoId: null } },
+    pathologies: 'Insuffisance veineuse',
+    jours: [0,1,2,3,4,5,6], passages: [{ debut: '17:30', fin: '' }],
+    soins: [soin('contention', null, 1, 1), soin('pilul', null, 7, 6)],
+    notes: [], statut: 'aVisiter', statutNote: '', archive: false, ordre: 4 }
+];
+
+/* =========================================================
+   8. NOTE INTELLIGENTE
+   Le SEUL endroit de l'application qui parle à l'extérieur.
+   Rien ne sort d'ici sans être passé par pseudonymiser().
+   ========================================================= */
+const MODELE = 'claude-haiku-4-5-20251001';
+let cleApi = null, propositions = [], texteEnvoye = '';
+
+async function lireCle() {
+  const r = await DB.tout('reglages');
+  cleApi = (r.find(x => x.id === 'cle-api') || {}).valeur || null;
+  urlSync = (r.find(x => x.id === 'url-sync') || {}).valeur || null;
+}
+async function enregistrerCle() {
+  const v = document.getElementById('cle-champ').value.trim();
+  if (!v.startsWith('sk-ant-')) return alert('Cette clé ne ressemble pas à une clé Anthropic.');
+  cleApi = v;
+  await DB.ecrire('reglages', { id: 'cle-api', valeur: v });
+  ouvrirNote();
+}
+
+/* ----- la frontière : noms → étiquettes ----- */
+const echapper = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function pseudonymiser(texte) {
+  const actifs = patients.filter(p => !p.archive);
+  const table = {};
+  actifs.forEach((p, i) => {
+    const cle = 'P' + String(i + 1).padStart(2, '0');
+    table[cle] = p;
+    p.nom.replace(/^(Mme|Mlle|M\.|Mr)\s+/, '').split(' ')
+      .filter(m => m.length > 2)
+      .forEach(m => { texte = texte.replace(new RegExp(echapper(m), 'gi'), cle); });
+  });
+  return { texte, table };
+}
+function depseudonymiser(texte, table) {
+  Object.entries(table).forEach(([cle, p]) => {
+    texte = texte.replace(new RegExp(cle, 'g'), p.nom);
+  });
+  return texte;
+}
+
+/* ----- appel du modèle ----- */
+async function analyser() {
+  const brut = document.getElementById('note-libre').value.trim();
+  if (!brut) return;
+  const zone = document.getElementById('resultat');
+  zone.innerHTML = '<div class="sous">Analyse en cours…</div>';
+
+  const { texte, table } = pseudonymiser(brut);
+  texteEnvoye = texte;
+
+  // contexte : uniquement des étiquettes, des horaires et des libellés de soins
+  const contexte = Object.entries(table).map(([cle, p]) => ({
+    id: cle,
+    heure: premierPassage(p),
+    statut: p.statut,
+    jours: p.jours,
+    soins: (p.soins || []).map(s => ({ id: s.id, libelle: s.libelle }))
+  }));
+
+  const consigne = `Tu es l'assistant d'organisation d'une application de tournée pour infirmier libéral.
+Tu ne donnes JAMAIS d'avis médical, de diagnostic ni de conseil de soin : tu convertis une note en actions d'organisation.
+Les patients sont désignés par des étiquettes (P01, P02…). N'invente jamais d'étiquette absente du contexte.
+
+Tournée du jour : ${JSON.stringify(contexte)}
+
+Actions possibles :
+- {"patient":"P01","type":"statut","valeur":"visite|absent|hospitalise|aVisiter"}
+- {"patient":"P01","type":"heure","valeur":"HH:MM"}
+- {"patient":"P01","type":"note","valeur":"texte de la note"}
+- {"patient":"P01","type":"soinFait","valeur":"id du soin"}
+
+Réponds UNIQUEMENT par un objet JSON, sans texte autour et sans balises Markdown :
+{"actions":[{"patient":"...","type":"...","valeur":"...","resume":"phrase courte en français décrivant l'action"}]}
+Si la note ne contient aucune action d'organisation, renvoie {"actions":[]}.`;
+
+  const contenu = [];
+  if (photoNote) contenu.push({ type: 'image', source: { type: 'base64', media_type: photoNote.mimeType, data: photoNote.base64 } });
+  contenu.push({ type: 'text', text: texte });
+
+  try {
+    const rep = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': cleApi,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: MODELE, max_tokens: 1000, system: consigne,
+        messages: [{ role: 'user', content: contenu }]
+      })
+    });
+    if (!rep.ok) throw new Error(rep.status === 401 ? 'Clé refusée. Vérifie-la dans ton compte Anthropic.' : 'Erreur ' + rep.status);
+    const data = await rep.json();
+    const brutRep = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    const propre = brutRep.replace(/```json|```/g, '').trim();
+    const parse = JSON.parse(propre);
+
+    propositions = (parse.actions || [])
+      .filter(a => table[a.patient])
+      .map(a => ({ ...a, cible: table[a.patient], resume: depseudonymiser(a.resume || '', table) }));
+
+    afficherPropositions();
+  } catch (err) {
+    zone.innerHTML = `<div class="erreur">${e(err.message)}</div>`;
+  }
+}
+
+function afficherPropositions() {
+  const zone = document.getElementById('resultat');
+  if (!propositions.length) {
+    zone.innerHTML = '<div class="sous">Aucune action d’organisation détectée dans cette note.</div>';
+    return;
+  }
+  const noms = { statut: 'Statut', heure: 'Horaire', note: 'Note', soinFait: 'Soin fait' };
+  zone.innerHTML = `
+    <div class="etiquette" style="margin:16px 0 8px">À valider</div>
+    ${propositions.map((a, i) => `<label class="propo">
+        <input type="checkbox" checked data-i="${i}">
+        <span><em>${e(noms[a.type] || a.type)}</em><b>${e(a.resume)}</b></span>
+      </label>`).join('')}
+    <button class="plein" onclick="appliquer()">Appliquer les actions cochées</button>
+    <div class="etiquette" style="margin:18px 0 8px">Ce qui a été envoyé</div>
+    ${photoNote ? '<div class="avert">Une photo est partie <b>telle quelle</b> : on ne peut pas pseudonymiser une image. À réserver aux tests.</div>' : ''}
+    <div class="envoye">${e(texteEnvoye)}</div>`;
+}
+
+async function appliquer() {
+  const cochees = [...document.querySelectorAll('#resultat input:checked')].map(i => propositions[+i.dataset.i]);
+  for (const a of cochees) {
+    const p = a.cible;
+    if (a.type === 'statut') await majPatient(p.id, { statut: a.valeur });
+    else if (a.type === 'heure') {
+      const passages = [...(p.passages || [{}])];
+      passages[0] = { ...passages[0], debut: a.valeur };
+      await majPatient(p.id, { passages });
+    }
+    else if (a.type === 'note')
+      await majPatient(p.id, { notes: [...(p.notes || []), { id: Date.now() + Math.random(), texte: a.valeur, date: aujourdhui(), archivee: false }] });
+    else if (a.type === 'soinFait')
+      await majPatient(p.id, { soins: (p.soins || []).map(s => s.id === a.valeur ? { ...s, dernierFait: aujourdhui() } : s) });
+  }
+  fermerNote();
+  aller('tournee');
+}
+
+/* ----- interface ----- */
+function ouvrirNote() {
+  propositions = [];
+  const d = document.createElement('div');
+  d.className = 'voile';
+  d.id = 'voile';
+  d.onclick = ev => { if (ev.target === d) fermerNote(); };
+  d.innerHTML = cleApi ? `
+    <div class="feuille">
+      <div class="poignee"></div>
+      <h2>Note rapide</h2>
+      <p class="sous">Les noms de tes patients sont remplacés par des étiquettes avant l’envoi.</p>
+      <button class="micro" id="micro-note" onclick="basculerDictee('note-libre','micro-note','mode-note')">🎙 Dicter</button>
+      <div class="mode-dictee" id="mode-note"></div>
+      <textarea class="champ" id="note-libre" placeholder="Ex : Madame Aubry est hospitalisée jusqu’à jeudi, Ferrand décalé à 15h et sa mèche est faite."></textarea>
+      <div id="photo-note"></div>
+      <input type="file" id="fichier-note" accept="image/*" onchange="joindrePhoto(this.files[0])">
+      <button class="vide" style="margin-bottom:8px" onclick="document.getElementById('fichier-note').click()">📷 Photo ou image de la galerie</button>
+      <div class="duo">
+        <button class="vide" onclick="fermerNote()">Annuler</button>
+        <button class="plein" onclick="analyser()">Analyser</button>
+      </div>
+      <div id="resultat"></div>
+    </div>` : `
+    <div class="feuille">
+      <div class="poignee"></div>
+      <h2>Ta clé Anthropic</h2>
+      <p class="sous">Elle reste sur cet appareil et n’est jamais envoyée ailleurs qu’à Anthropic. Tu la crées sur console.anthropic.com.</p>
+      <input class="champ" id="cle-champ" type="password" placeholder="sk-ant-…" autocomplete="off">
+      <div class="duo">
+        <button class="vide" onclick="fermerNote()">Plus tard</button>
+        <button class="plein" onclick="enregistrerCle()">Enregistrer</button>
+      </div>
+    </div>`;
+  document.body.appendChild(d);
+}
+function fermerNote() { document.getElementById('voile')?.remove(); }
+
+/* =========================================================
+   9. DICTÉE
+   On tente d'abord la reconnaissance sur l'appareil.
+   Si le navigateur ne sait pas faire, on le DIT — jamais en silence.
+   ========================================================= */
+let reco = null, forcerDistant = false;
+
+function basculerDictee(champId, btnId, modeId) {
+  const Reco = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const btn = document.getElementById(btnId), mode = document.getElementById(modeId);
+  if (!Reco) { mode.textContent = 'Dictée non disponible dans ce navigateur — utilise le micro de ton clavier.'; return; }
+  if (reco) { reco.stop(); return; }
+
+  reco = new Reco();
+  reco.lang = 'fr-FR'; reco.continuous = true; reco.interimResults = false;
+  let local = false;
+  if (!forcerDistant && 'processLocally' in reco) { try { reco.processLocally = true; local = true; } catch (err) {} }
+
+  const champ = document.getElementById(champId);
+  reco.onresult = ev => {
+    for (let i = ev.resultIndex; i < ev.results.length; i++)
+      if (ev.results[i].isFinal) champ.value = (champ.value + ' ' + ev.results[i][0].transcript).trim();
+  };
+  reco.onerror = ev => {
+    if (local && (ev.error === 'language-not-supported' || ev.error === 'service-not-allowed')) {
+      forcerDistant = true;
+      mode.innerHTML = 'Pas de moteur hors ligne installé. Appuie à nouveau pour dicter <b>via le réseau</b>.';
+    } else mode.textContent = 'Dictée interrompue (' + ev.error + ')';
+  };
+  reco.onend = () => { reco = null; btn.classList.remove('on'); btn.textContent = '🎙 Dicter'; };
+
+  try { reco.start(); }
+  catch (err) {
+    reco = null;
+    mode.textContent = 'Micro refusé par le navigateur (' + err.name + '). Ouvre l’appli en plein écran, sur une adresse https.';
+    return;
+  }
+  btn.classList.add('on'); btn.textContent = '■ Arrêter';
+  mode.innerHTML = local
+    ? 'Reconnaissance <b>sur l’appareil</b> — la voix ne sort pas du téléphone.'
+    : 'Reconnaissance <b>par le réseau</b> — l’audio transite par le navigateur. Évite les noms complets.';
+}
+
+/* =========================================================
+   10. PHOTOS ET DOCUMENTS
+   Les documents sont stockés en Blob, jamais en base64.
+   ========================================================= */
+let photoNote = null, photoNouveau = null, docsCourants = [];
+
+const lireBase64 = f => new Promise((ok, ko) => {
+  const r = new FileReader();
+  r.onload = () => ok(r.result.split(',')[1]);
+  r.onerror = () => ko(new Error('Lecture impossible'));
+  r.readAsDataURL(f);
+});
+
+async function joindrePhoto(f) {
+  if (!f) return;
+  photoNote = { mimeType: f.type, base64: await lireBase64(f), url: URL.createObjectURL(f) };
+  document.getElementById('photo-note').innerHTML =
+    `<div class="miniature"><img src="${photoNote.url}" alt="Photo jointe"><button onclick="retirerPhoto()" aria-label="Retirer">×</button></div>`;
+}
+function retirerPhoto() {
+  if (photoNote) URL.revokeObjectURL(photoNote.url);
+  photoNote = null;
+  document.getElementById('photo-note').innerHTML = '';
+}
+
+async function chargerDocuments(pid) {
+  docsCourants.forEach(d => d.url && URL.revokeObjectURL(d.url));
+  const tous = await DB.tout('documents');
+  docsCourants = tous.filter(d => d.patientId === pid)
+    .map(d => ({ ...d, url: URL.createObjectURL(d.fichier) }));
+}
+async function ajouterDocument(pid, f) {
+  if (!f) return;
+  await DB.ecrire('documents', {
+    id: Date.now(), patientId: pid,
+    nom: f.name || 'photo.jpg', fichier: f, mimeType: f.type || 'image/jpeg', date: aujourdhui()
+  });
+  await chargerDocuments(pid); dessiner();
+}
+async function supprimerDocument(id) {
+  await DB.supprimer('documents', id);
+  await chargerDocuments(ficheOuverte); dessiner();
+}
+
+/* =========================================================
+   11. NOUVEAU PATIENT
+   ========================================================= */
+let brouillon = null;
+const vierge = () => ({
+  nom: '', naissance: '', telephone: '',
+  adresse: { rue: '', ville: '', etage: '', porte: '' },
+  acces: { codePortail: '', codeBatiment: '', interphone: '', cles: { possede: false, ou: '' } },
+  pathologies: '', jours: [], passages: [{ debut: '', fin: '' }], soins: []
+});
+const val = id => (document.getElementById(id) || {}).value || '';
+
+function lireFormulaire() {
+  if (!document.getElementById('n-nom')) return;
+  brouillon.nom = val('n-nom'); brouillon.naissance = val('n-naissance'); brouillon.telephone = val('n-tel');
+  brouillon.adresse = { rue: val('n-rue'), ville: val('n-ville'), etage: val('n-etage'), porte: val('n-porte') };
+  brouillon.acces = {
+    codePortail: val('n-portail'), codeBatiment: val('n-batiment'), interphone: val('n-interphone'),
+    cles: { possede: !!val('n-cles'), ou: val('n-cles') }
+  };
+  brouillon.pathologies = val('n-patho');
+  brouillon.passages = [{ debut: val('n-h1'), fin: '' }];
+  if (val('n-h2')) brouillon.passages.push({ debut: val('n-h2'), fin: '' });
+}
+function basculerJour(j) { lireFormulaire();
+  brouillon.jours = brouillon.jours.includes(j) ? brouillon.jours.filter(x => x !== j) : [...brouillon.jours, j].sort();
+  dessiner(); }
+function basculerSoin(t) { lireFormulaire();
+  brouillon.soins = brouillon.soins.includes(t) ? brouillon.soins.filter(x => x !== t) : [...brouillon.soins, t];
+  dessiner(); }
+
+function ecranNouveau() {
+  if (!brouillon) brouillon = vierge();
+  const b = brouillon;
+  document.getElementById('titre').textContent = 'Nouveau patient';
+  document.getElementById('compteurs').innerHTML = '';
+  document.getElementById('ecran').innerHTML = `
+    <button class="retour" onclick="annulerNouveau()">‹ Annuler</button>
+
+    <div class="bloc">
+      <div class="etiquette">Saisie assistée</div>
+      <div class="avert">Ici, la pseudonymisation est impossible : le patient n’existe pas encore. Ce que tu dictes ou photographies part <b>tel quel</b>. À réserver aux tests — sur la version Android, la lecture se fera sur l’appareil.</div>
+      <button class="micro" id="micro-new" onclick="basculerDictee('n-dictee','micro-new','mode-new')">🎙 Dicter la fiche</button>
+      <div class="mode-dictee" id="mode-new"></div>
+      <textarea class="champ" id="n-dictee" placeholder="Ex : Madame Lambert Solange, née en 1940, 12 rue Pasteur, 2e étage, code 4590, tous les matins à 8h, toilette et glycémie."></textarea>
+      <div id="photo-new"></div>
+      <input type="file" id="fichier-new" accept="image/*" onchange="joindrePhotoNouveau(this.files[0])">
+      <div class="duo">
+        <button class="vide" onclick="document.getElementById('fichier-new').click()">📷 Photo</button>
+        <button class="plein" onclick="remplirParIA()">Remplir</button>
+      </div>
+      <div id="etat-ia" class="mode-dictee"></div>
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Identité</div>
+      <label class="etiq-champ" for="n-nom">Nom</label>
+      <input class="champ" id="n-nom" value="${e(b.nom)}" placeholder="Mme Lambert Solange">
+      <div class="duo-champ">
+        <div><label class="etiq-champ" for="n-naissance">Naissance</label>
+          <input class="champ" id="n-naissance" type="date" value="${e(b.naissance)}"></div>
+        <div><label class="etiq-champ" for="n-tel">Téléphone</label>
+          <input class="champ" id="n-tel" type="tel" value="${e(b.telephone)}"></div>
+      </div>
+      <label class="etiq-champ" for="n-patho">Pathologies</label>
+      <input class="champ" id="n-patho" value="${e(b.pathologies)}">
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Accès</div>
+      <label class="etiq-champ" for="n-rue">Adresse</label>
+      <input class="champ" id="n-rue" value="${e(b.adresse.rue)}" placeholder="14 rue des Lilas">
+      <input class="champ" id="n-ville" value="${e(b.adresse.ville)}" placeholder="Code postal et ville">
+      <div class="duo-champ">
+        <div><label class="etiq-champ" for="n-etage">Étage</label>
+          <input class="champ" id="n-etage" value="${e(b.adresse.etage)}"></div>
+        <div><label class="etiq-champ" for="n-porte">Porte</label>
+          <input class="champ" id="n-porte" value="${e(b.adresse.porte)}"></div>
+      </div>
+      <div class="duo-champ">
+        <div><label class="etiq-champ" for="n-portail">Code portail</label>
+          <input class="champ" id="n-portail" value="${e(b.acces.codePortail)}"></div>
+        <div><label class="etiq-champ" for="n-batiment">Code bâtiment</label>
+          <input class="champ" id="n-batiment" value="${e(b.acces.codeBatiment)}"></div>
+      </div>
+      <label class="etiq-champ" for="n-interphone">Interphone</label>
+      <input class="champ" id="n-interphone" value="${e(b.acces.interphone)}">
+      <label class="etiq-champ" for="n-cles">Clés — où sont-elles ?</label>
+      <input class="champ" id="n-cles" value="${e(b.acces.cles.ou)}" placeholder="Laisser vide si tu n’as pas les clés">
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Passages</div>
+      <div class="duo-champ">
+        <div><label class="etiq-champ" for="n-h1">Matin</label>
+          <input class="champ" id="n-h1" type="time" value="${e(b.passages[0]?.debut || '')}"></div>
+        <div><label class="etiq-champ" for="n-h2">Soir</label>
+          <input class="champ" id="n-h2" type="time" value="${e(b.passages[1]?.debut || '')}"></div>
+      </div>
+      <label class="etiq-champ">Jours de passage</label>
+      <div class="puces">${JOURS.map((j, i) =>
+        `<button class="puce ${b.jours.includes(i) ? 'on' : ''}" onclick="basculerJour(${i})">${j.slice(0,3)}</button>`).join('')}</div>
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Soins</div>
+      <div class="puces">${Object.entries(CATALOGUE).map(([t, c]) =>
+        `<button class="puce ${b.soins.includes(t) ? 'on' : ''}" onclick="basculerSoin('${t}')">${c.nom}</button>`).join('')}</div>
+    </div>
+
+    <button class="plein" onclick="enregistrerNouveau()">Créer le patient</button>`;
+}
+
+async function joindrePhotoNouveau(f) {
+  if (!f) return;
+  photoNouveau = { mimeType: f.type, base64: await lireBase64(f), url: URL.createObjectURL(f) };
+  document.getElementById('photo-new').innerHTML =
+    `<div class="miniature"><img src="${photoNouveau.url}" alt="Photo"><button onclick="retirerPhotoNouveau()" aria-label="Retirer">×</button></div>`;
+}
+function retirerPhotoNouveau() {
+  if (photoNouveau) URL.revokeObjectURL(photoNouveau.url);
+  photoNouveau = null;
+  document.getElementById('photo-new').innerHTML = '';
+}
+
+async function remplirParIA() {
+  if (!cleApi) return ouvrirNote();
+  const etat = document.getElementById('etat-ia');
+  const texte = val('n-dictee').trim();
+  if (!texte && !photoNouveau) { etat.textContent = 'Dicte quelque chose ou joins une photo d’abord.'; return; }
+  etat.textContent = 'Lecture en cours…';
+  lireFormulaire();
+
+  const consigne = `Tu extrais les informations d'une fiche patient pour une application de tournée d'infirmier libéral.
+À partir du texte et/ou de l'image, renvoie UNIQUEMENT ce JSON, sans texte autour ni balises Markdown :
+{"nom":"","naissance":"AAAA-MM-JJ","telephone":"","adresse":{"rue":"","ville":"","etage":"","porte":""},
+"acces":{"codePortail":"","codeBatiment":"","interphone":"","cles":{"ou":""}},
+"pathologies":"","jours":[0,1,2],"passages":[{"debut":"HH:MM"}],"soins":["cle_du_catalogue"]}
+Les jours vont de 0 (lundi) à 6 (dimanche). Les clés de soins possibles : ${Object.keys(CATALOGUE).join(', ')}.
+Laisse vide tout champ dont l'information est absente. N'invente rien.`;
+
+  const contenu = [];
+  if (photoNouveau) contenu.push({ type: 'image', source: { type: 'base64', media_type: photoNouveau.mimeType, data: photoNouveau.base64 } });
+  contenu.push({ type: 'text', text: texte || 'Extrais les informations de cette image.' });
+
+  try {
+    const rep = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json', 'x-api-key': cleApi,
+        'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({ model: MODELE, max_tokens: 1000, system: consigne, messages: [{ role: 'user', content: contenu }] })
+    });
+    if (!rep.ok) throw new Error(rep.status === 401 ? 'Clé refusée.' : 'Erreur ' + rep.status);
+    const data = await rep.json();
+    const t = data.content.filter(b => b.type === 'text').map(b => b.text).join('').replace(/```json|```/g, '').trim();
+    const r = JSON.parse(t);
+
+    brouillon = {
+      nom: r.nom || brouillon.nom,
+      naissance: r.naissance || brouillon.naissance,
+      telephone: r.telephone || brouillon.telephone,
+      adresse: { ...brouillon.adresse, ...(r.adresse || {}) },
+      acces: {
+        codePortail: r.acces?.codePortail || brouillon.acces.codePortail,
+        codeBatiment: r.acces?.codeBatiment || brouillon.acces.codeBatiment,
+        interphone: r.acces?.interphone || brouillon.acces.interphone,
+        cles: { possede: !!r.acces?.cles?.ou, ou: r.acces?.cles?.ou || brouillon.acces.cles.ou }
+      },
+      pathologies: r.pathologies || brouillon.pathologies,
+      jours: (r.jours && r.jours.length) ? r.jours : brouillon.jours,
+      passages: (r.passages && r.passages.length) ? r.passages : brouillon.passages,
+      soins: (r.soins || []).filter(s => CATALOGUE[s])
+    };
+    dessiner();
+    document.getElementById('etat-ia').textContent = 'Fiche pré-remplie — relis et corrige avant de créer.';
+  } catch (err) {
+    document.getElementById('etat-ia').textContent = err.message;
+  }
+}
+
+async function enregistrerNouveau() {
+  lireFormulaire();
+  if (!brouillon.nom.trim()) { alert('Il faut au moins un nom.'); return; }
+  const p = {
+    id: Date.now(),
+    nom: brouillon.nom.trim(), naissance: brouillon.naissance, telephone: brouillon.telephone,
+    type: 'chronique', adresse: { ...brouillon.adresse, typeLogement: 'appartement' },
+    acces: brouillon.acces, pathologies: brouillon.pathologies,
+    jours: brouillon.jours, passages: brouillon.passages.filter(x => x.debut),
+    soins: brouillon.soins.map(t => soin(t, null, 1, 1)),
+    notes: [], statut: 'aVisiter', statutNote: '', archive: false, ordre: patients.length
+  };
+  await DB.ecrire('patients', p);
+  patients.push(p);
+  brouillon = null; retirerPhotoNouveau();
+  ouvrirFiche(p.id);
+}
+function annulerNouveau() { brouillon = null; photoNouveau = null; aller('patients'); }
+
+/* =========================================================
+   12. RÉGLAGES ET SAUVEGARDE CHIFFRÉE
+   La sauvegarde sort de l'appareil chiffrée en AES-256.
+   Sans la phrase secrète, le fichier est illisible — y compris
+   pour le service où tu le déposes.
+   ========================================================= */
+function b64(u8) {
+  let s = ''; const pas = 0x8000;
+  for (let i = 0; i < u8.length; i += pas) s += String.fromCharCode.apply(null, u8.subarray(i, i + pas));
+  return btoa(s);
+}
+function deb64(s) {
+  const b = atob(s), u = new Uint8Array(b.length);
+  for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  return u;
+}
+async function deriverCle(phrase, sel) {
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(phrase), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: sel, iterations: 250000, hash: 'SHA-256' },
+    base, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+function telecharger(texte, nom) {
+  const u = URL.createObjectURL(new Blob([texte], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = u; a.download = nom; a.click();
+  setTimeout(() => URL.revokeObjectURL(u), 3000);
+}
+
+async function construirePaquet() {
+  const docs = await DB.tout('documents');
+  return {
+    version: 1, date: new Date().toISOString(),
+    patients: await DB.tout('patients'),
+    transmissions: await DB.tout('transmissions'),
+    documents: await Promise.all(docs.map(async d => ({ ...d, fichier: await lireBase64(d.fichier) })))
+  };
+}
+async function chiffrer(paquet, phrase) {
+  const sel = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const cle = await deriverCle(phrase, sel);
+  const chiffre = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, cle,
+    new TextEncoder().encode(JSON.stringify(paquet)));
+  return { v: 1, sel: b64(sel), iv: b64(iv), donnees: b64(new Uint8Array(chiffre)) };
+}
+async function dechiffrer(fichier, phrase) {
+  const cle = await deriverCle(phrase, deb64(fichier.sel));
+  const clair = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: deb64(fichier.iv) }, cle, deb64(fichier.donnees));
+  return JSON.parse(new TextDecoder().decode(clair));
+}
+async function appliquerPaquet(p) {
+  for (const x of p.patients || []) await DB.ecrire('patients', x);
+  for (const x of p.transmissions || []) await DB.ecrire('transmissions', x);
+  for (const d of p.documents || [])
+    await DB.ecrire('documents', { ...d, fichier: new Blob([deb64(d.fichier)], { type: d.mimeType }) });
+  await charger();
+}
+
+async function exporterSauvegarde() {
+  const etat = document.getElementById('etat-sauv');
+  const phrase = val('s-phrase');
+  if (phrase.length < 8) { etat.textContent = 'Choisis une phrase secrète d’au moins 8 caractères.'; return; }
+  if (!window.crypto?.subtle) { etat.textContent = 'Le chiffrement exige une adresse en https.'; return; }
+  etat.textContent = 'Chiffrement en cours…';
+  try {
+    const chiffre = await chiffrer(await construirePaquet(), phrase);
+    telecharger(JSON.stringify(chiffre), 'tournee-' + aujourdhui() + '.sauvegarde');
+    etat.textContent = 'Sauvegarde créée. Range-la où tu veux : sans ta phrase, elle est illisible.';
+  } catch (err) { etat.textContent = 'Échec : ' + err.message; }
+}
+
+async function importerSauvegarde(f) {
+  const etat = document.getElementById('etat-sauv');
+  const phrase = val('s-phrase');
+  if (!f) return;
+  if (!phrase) { etat.textContent = 'Saisis d’abord la phrase secrète de cette sauvegarde.'; return; }
+  etat.textContent = 'Déchiffrement…';
+  try {
+    const p = await dechiffrer(JSON.parse(await f.text()), phrase);
+    await appliquerPaquet(p);
+    etat.textContent = (p.patients || []).length + ' patients restaurés.';
+    dessiner();
+  } catch (err) {
+    document.getElementById('etat-sauv').textContent = 'Déchiffrement impossible — phrase incorrecte ou fichier abîmé.';
+  }
+}
+
+/* ----- synchronisation : on n'envoie QUE du chiffré ----- */
+let urlSync = null;
+
+async function envoyerSync() {
+  const etat = document.getElementById('etat-sync');
+  const url = val('s-url').trim(), phrase = val('s-phrase');
+  if (!url.startsWith('https://')) { etat.textContent = 'L’adresse doit commencer par https://'; return; }
+  if (phrase.length < 8) { etat.textContent = 'Il faut la phrase secrète (bloc Sauvegarde) : c’est elle qui chiffre.'; return; }
+  etat.textContent = 'Chiffrement et envoi…';
+  try {
+    const chiffre = await chiffrer(await construirePaquet(), phrase);
+    const rep = await fetch(url, {
+      method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(chiffre)
+    });
+    if (!rep.ok) throw new Error('Refus du serveur (' + rep.status + ')');
+    urlSync = url;
+    await DB.ecrire('reglages', { id: 'url-sync', valeur: url });
+    etat.textContent = 'Envoyé. Le serveur ne détient qu’un bloc chiffré.';
+  } catch (err) { etat.textContent = 'Échec : ' + err.message; }
+}
+
+async function recupererSync() {
+  const etat = document.getElementById('etat-sync');
+  const url = val('s-url').trim(), phrase = val('s-phrase');
+  if (!url.startsWith('https://')) { etat.textContent = 'L’adresse doit commencer par https://'; return; }
+  if (!phrase) { etat.textContent = 'Saisis la phrase secrète pour déchiffrer.'; return; }
+  etat.textContent = 'Récupération…';
+  try {
+    const rep = await fetch(url);
+    if (!rep.ok) throw new Error('Refus du serveur (' + rep.status + ')');
+    const fichier = await rep.json();
+    if (!fichier || !fichier.donnees) throw new Error('Rien de valide à cette adresse');
+    const p = await dechiffrer(fichier, phrase);
+    await appliquerPaquet(p);
+    urlSync = url;
+    await DB.ecrire('reglages', { id: 'url-sync', valeur: url });
+    etat.textContent = (p.patients || []).length + ' patients récupérés.';
+    dessiner();
+  } catch (err) { document.getElementById('etat-sync').textContent = 'Échec : ' + err.message; }
+}
+
+async function enregistrerCleReglages() {
+  const v = val('s-cle').trim();
+  const etat = document.getElementById('etat-cle');
+  if (!v.startsWith('sk-ant-')) { etat.textContent = 'Une clé Anthropic commence par sk-ant-.'; return; }
+  cleApi = v;
+  await DB.ecrire('reglages', { id: 'cle-api', valeur: v });
+  dessiner();
+}
+async function retirerCle() {
+  if (!confirm('Retirer la clé de cet appareil ?')) return;
+  await DB.supprimer('reglages', 'cle-api');
+  cleApi = null; dessiner();
+}
+async function toutEffacer() {
+  if (!confirm('Effacer tous les patients, documents et transmissions de cet appareil ? C’est irréversible.')) return;
+  for (const t of ['patients', 'documents', 'transmissions'])
+    for (const x of await DB.tout(t)) await DB.supprimer(t, x.id);
+  patients = []; docsCourants = [];
+  aller('tournee');
+}
+
+function ecranReglages() {
+  document.getElementById('titre').textContent = 'Réglages';
+  document.getElementById('compteurs').innerHTML = '';
+  const masque = cleApi ? cleApi.slice(0, 11) + '…' + cleApi.slice(-4) : null;
+
+  document.getElementById('ecran').innerHTML = `
+    <div class="bloc">
+      <div class="etiquette">Clé Anthropic</div>
+      ${masque
+        ? `<div class="ligne"><span>Clé enregistrée</span><span class="code">${e(masque)}</span></div>
+           <button class="vide" style="margin-top:10px" onclick="retirerCle()">Retirer la clé</button>`
+        : `<p class="sous">Elle reste sur cet appareil. Tu la crées sur platform.claude.com, dans Settings puis API keys.</p>
+           <input class="champ" id="s-cle" type="password" placeholder="sk-ant-…" autocomplete="off">
+           <button class="plein" onclick="enregistrerCleReglages()">Enregistrer</button>
+           <div class="mode-dictee" id="etat-cle"></div>`}
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Sauvegarde</div>
+      <p class="sous">La sauvegarde est un fichier <b>chiffré</b>. Tu peux le déposer sur Google Drive, l’envoyer par mail ou le garder sur ton téléphone : sans ta phrase secrète, personne ne peut le lire.</p>
+      <label class="etiq-champ" for="s-phrase">Phrase secrète</label>
+      <input class="champ" id="s-phrase" type="password" placeholder="8 caractères minimum" autocomplete="off">
+      <div class="avert">Si tu perds cette phrase, la sauvegarde est définitivement illisible. Personne ne peut la récupérer, moi non plus.</div>
+      <button class="plein" style="margin-bottom:8px" onclick="exporterSauvegarde()">Créer une sauvegarde</button>
+      <input type="file" id="fichier-sauv" accept=".sauvegarde,application/json" onchange="importerSauvegarde(this.files[0])">
+      <button class="vide" onclick="document.getElementById('fichier-sauv').click()">Restaurer une sauvegarde</button>
+      <div class="mode-dictee" id="etat-sauv"></div>
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Synchronisation</div>
+      <p class="sous">Adresse d’une base distante (Firebase, Supabase, ton propre serveur). Seul un bloc <b>chiffré</b> y est déposé : le serveur ne voit ni nom, ni adresse, ni code.</p>
+      <label class="etiq-champ" for="s-url">Adresse de la base</label>
+      <input class="champ" id="s-url" type="url" value="${e(urlSync || '')}" placeholder="https://…firebaseio.com/tournee.json" autocomplete="off">
+      <div class="avert">Le chiffrement utilise la phrase secrète du bloc Sauvegarde. Verrouille aussi les règles d’écriture de ta base : chiffré ou non, une base ouverte peut être effacée par n’importe qui.</div>
+      <div class="duo">
+        <button class="vide" onclick="recupererSync()">Récupérer</button>
+        <button class="plein" onclick="envoyerSync()">Envoyer</button>
+      </div>
+      <div class="mode-dictee" id="etat-sync"></div>
+    </div>
+
+    <div class="bloc">
+      <div class="etiquette">Cet appareil</div>
+      <div class="ligne"><span>Patients</span><span>${patients.filter(p => !p.archive).length}</span></div>
+      <div class="ligne"><span>Stockage</span><span>${DB.enMemoire() ? 'Mémoire vive' : 'IndexedDB'}</span></div>
+      <div class="ligne"><span>Connexion</span><span>${window.isSecureContext ? 'Sécurisée' : 'Non sécurisée'}</span></div>
+      <button class="vide" style="margin-top:12px;border-color:var(--alerte);color:var(--alerte)" onclick="toutEffacer()">Effacer toutes les données</button>
+    </div>`;
+}
+
+/* ========================================================= */
+(async function () { await DB.init(); await charger(); await lireCle(); dessiner(); })();
+</script>
+</body>
+</html>
